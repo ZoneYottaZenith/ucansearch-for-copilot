@@ -1,0 +1,45 @@
+# UCanSearch for Copilot 本地打包指令（WSL 里执行）
+# 生成的 ZIP 只含源码与打包好的 vsix，不含依赖、编译产物和 git 历史
+
+cd "/mnt/d/Software/IDE/VSCode/Code/Test/001/做一个中转插件/UCanSearch for Copilot" && \
+zip -r "/mnt/d/Software/IDE/VSCode/Code/Test/001/做一个中转插件/UCanSearch for Copilot/UCanSearch-for-Copilot-0.3.6源码-261027.zip" \
+  . \
+  -x "node_modules/*" \
+  -x "*/node_modules/*" \
+  -x ".git/*" \
+  -x "*.git/*" \
+  -x "out/*" \
+  -x "*/out/*" \
+  -x "*.map" \
+  -x "*.vscode-test/*" \
+  -x "测试脚本/输出/*" \
+  -x "*.zip"
+# 最终 ZIP 放在：D:\Software\IDE\VSCode\Code\Test\001\做一个中转插件\UCanSearch for Copilot\
+
+# ─────────────────────────────────────────────
+# 包里会有的东西
+#   src/                 TypeScript 源码（扩展入口、面板、两个工具、HTTP 与格式化）
+#   media/               面板 html/css/js、logo（icon.svg / icon.png）、工具图标（tool-icon-light.svg）
+#   resources/screenshots/  README 里引用的面板截图
+#   测试脚本/            清单校验、纯函数自检、面板预览、接口冒烟、图标检查
+#   package.json / tsconfig.json / .vscodeignore / .gitignore
+#   README.md / LICENSE
+#   package-lock.json    锁版本，重装依赖要用
+#   ucansearch-0.3.6.vsix    打包好的插件（可离线安装）
+#   本地打包指令-UCanSearch.txt  本文件
+#
+# 包里不会有的东西
+#   node_modules/          依赖，解压后 npm install 重装
+#   out/                   tsc 编译产物，npm run compile 重新生成
+#   .git/                  git 历史
+#   *.map / .vscode-test/  sourcemap 与测试缓存
+#   测试脚本/输出/        预览脚本生成的静态页，重跑就有
+#
+# 拿出来之后怎么用
+#   npm install && npm run compile                    # 重新编译
+#   code --install-extension ucansearch-0.3.6.vsix    # 或者直接用现成的 vsix
+#
+# 打包前建议先跑一遍自检（需要 node 与 uv）
+#   npm run compile
+#   node "测试脚本/纯函数自检.cjs"
+#   uv run --no-project python "测试脚本/清单校验.py"
