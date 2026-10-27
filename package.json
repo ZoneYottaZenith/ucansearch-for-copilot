@@ -1,0 +1,196 @@
+{
+	"name": "ucansearch",
+	"displayName": "UCanSearch for Copilot",
+	"description": "把网页搜索和网页抓取接进 GitHub Copilot：搜索走 DeepSeek Search 接口，抓取走 DeepSeek Fetch 接口，结果直接喂给模型。",
+	"version": "0.3.6",
+	"publisher": "ZoneYottaZenith",
+	"license": "MIT",
+	"icon": "media/icon.png",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ZoneYottaZenith/ucansearch-for-copilot.git"
+	},
+	"homepage": "https://github.com/ZoneYottaZenith/ucansearch-for-copilot#readme",
+	"bugs": {
+		"url": "https://github.com/ZoneYottaZenith/ucansearch-for-copilot/issues"
+	},
+	"engines": {
+		"vscode": "^1.104.0"
+	},
+	"categories": [
+		"AI",
+		"Chat"
+	],
+	"keywords": [
+		"copilot",
+		"github-copilot",
+		"copilot-chat",
+		"web-search",
+		"web-fetch",
+		"deepseek",
+		"agent",
+		"tools",
+		"搜索",
+		"抓取"
+	],
+	"main": "./out/extension.js",
+	"activationEvents": [
+		"onStartupFinished",
+		"onLanguageModelTool:ucansearch_query_web",
+		"onLanguageModelTool:ucansearch_fetch_web"
+	],
+	"contributes": {
+		"languageModelTools": [
+			{
+				"name": "ucansearch_query_web",
+				"displayName": "UCanSearch 网页搜索",
+				"userDescription": "用 DeepSeek 搜索接口查实时网页，返回标题、链接、摘要和评分。",
+				"modelDescription": "搜索实时网页并返回结构化结果。当需要最新信息、新闻、官方文档、版本发布、价格或任何你不确定的事实时，先调用它搜索，再从结果里挑链接交给 ucansearch_fetch_web 读全文；不要凭空猜 URL。每条结果包含标题、链接、摘要、发布时间、相关度（rerank_score，0-3，1.5 以上算优质）和权威性（authority，0-4，3 以上极权威）。query 支持 site:、-site:、-关键词、\"精确短语\"、lang:zh,en、after:2025-01-01、before:2026-06-01 等语法。",
+				"toolReferenceName": "searchWeb",
+				"canBeReferencedInPrompt": true,
+				"icon": {
+					"light": "media/tool-icon-light.svg",
+					"dark": "media/icon.svg"
+				},
+				"when": "config.ucansearch.enabled",
+				"tags": [
+					"web",
+					"search"
+				],
+				"inputSchema": {
+					"type": "object",
+					"properties": {
+						"query": {
+							"type": "string",
+							"description": "搜索词，1-128 个字符，不能全是空白。支持 site:github.com、-site:example.com、-关键词、\"精确短语\"、lang:zh,en、after:2025、before:2026 等语法。"
+						},
+						"count": {
+							"type": "integer",
+							"description": "返回条数，1-50，默认取设置里的值（默认 5）。",
+							"minimum": 1,
+							"maximum": 50
+						},
+						"ori_question": {
+							"type": "string",
+							"description": "触发这次搜索的用户原始问题，1-128 个字符，帮助搜索引擎理解意图。可选。"
+						},
+						"localization": {
+							"type": "string",
+							"description": "用于优先返回本地化搜索结果的 IP 地址。可选。"
+						}
+					},
+					"required": [
+						"query"
+					]
+				}
+			},
+			{
+				"name": "ucansearch_fetch_web",
+				"displayName": "UCanSearch 网页抓取",
+				"userDescription": "抓取单个网页，返回 Markdown 正文。",
+				"modelDescription": "抓取单个网页并返回标题和 Markdown 正文。先用 ucansearch_query_web 拿到具体链接，再用它读全文；不要用它猜地址。url 必须是带 host 的 HTTP/HTTPS 地址，不能带用户名或密码。",
+				"toolReferenceName": "fetchWeb",
+				"canBeReferencedInPrompt": true,
+				"icon": {
+					"light": "media/tool-icon-light.svg",
+					"dark": "media/icon.svg"
+				},
+				"when": "config.ucansearch.enabled",
+				"tags": [
+					"web",
+					"fetch"
+				],
+				"inputSchema": {
+					"type": "object",
+					"properties": {
+						"url": {
+							"type": "string",
+							"description": "要抓取的网页地址，长度不超过 8192，必须是带 host 的 HTTP/HTTPS URL，不能携带用户名或密码。"
+						}
+					},
+					"required": [
+						"url"
+					]
+				}
+			}
+		],
+		"languageModelToolSets": [
+			{
+				"name": "UCanSearch",
+				"description": "给 Copilot 装上网页搜索和抓取",
+				"icon": "$(search)",
+				"tools": [
+					"searchWeb",
+					"fetchWeb"
+				]
+			}
+		],
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "ucansearch",
+					"title": "UCanSearch",
+					"icon": "media/icon.svg"
+				}
+			]
+		},
+		"views": {
+			"ucansearch": [
+				{
+					"id": "ucansearch.panel",
+					"type": "webview",
+					"name": "UCanSearch"
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "ucansearch.openPanel",
+				"category": "UCanSearch",
+				"title": "打开配置面板"
+			},
+			{
+				"command": "ucansearch.setApiKey",
+				"category": "UCanSearch",
+				"title": "设置 DeepSeek API Key"
+			},
+			{
+				"command": "ucansearch.testSearch",
+				"category": "UCanSearch",
+				"title": "测试一次网页搜索"
+			}
+		],
+		"configuration": {
+			"title": "UCanSearch",
+			"properties": {
+				"ucansearch.enabled": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "是否把搜索和抓取工具交给 Copilot 使用。关闭后两个工具都不会被调用，模型会退回内置能力。"
+				},
+				"ucansearch.baseUrl": {
+					"type": "string",
+					"default": "https://api.deepseek.com",
+					"description": "接口地址，填到域名即可，会自动补 /v1。自建代理可以填带前缀的地址，例如 https://proxy.example.com/deepseek。"
+				},
+				"ucansearch.defaultCount": {
+					"type": "number",
+					"default": 5,
+					"minimum": 1,
+					"maximum": 50,
+					"description": "模型没指定条数时默认返回几条搜索结果（1-50）。"
+				}
+			}
+		}
+	},
+	"scripts": {
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"vscode:prepublish": "npm run compile"
+	},
+	"devDependencies": {
+		"@types/node": "^20.14.0",
+		"@types/vscode": "^1.104.0",
+		"typescript": "^5.5.4"
+	}
+}

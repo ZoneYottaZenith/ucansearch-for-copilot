@@ -1,0 +1,18 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "运行 UCanSearch",
+			"type": "extensionHost",
+			"request": "launch",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}"
+			],
+			"outFiles": [
+				"${workspaceFolder}/out/**/*.js"
+			],
+			// 每次按 F5 先编译一遍，免得跑的是上一次的产物
+			"preLaunchTask": "npm: compile"
+		}
+	]
+}

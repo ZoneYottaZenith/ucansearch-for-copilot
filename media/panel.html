@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8" />
+	<meta http-equiv="Content-Security-Policy" content="%CSP%" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<link rel="stylesheet" href="%CSS_URI%" />
+	<title>UCanSearch</title>
+</head>
+<body>
+	<div class="wrap">
+		<header class="brand">
+			<div class="brand-left">
+				<span class="logo" aria-hidden="true"></span>
+				<div class="brand-text">
+					<h1>UCanSearch</h1>
+					<p>给 Copilot 装上网页搜索和抓取</p>
+				</div>
+			</div>
+			<label class="switch" title="关闭后两个工具会被注销，Copilot 回到原样">
+				<input type="checkbox" id="enabled" />
+				<span class="track"></span>
+			</label>
+		</header>
+
+		<!-- 接入 / 分离状态，让「有没有动到 Copilot」一眼可见 -->
+		<div id="statusBar" class="status-bar">
+			<span class="dot"></span>
+			<span id="statusText">已接入</span>
+		</div>
+
+		<section class="card">
+			<div class="card-head">
+				<h2>连接</h2>
+				<span id="connBadge" class="badge">未配置</span>
+			</div>
+
+			<div class="field">
+				<label for="baseUrl">接口地址</label>
+				<p class="hint">填到域名即可，<code>/v1</code> 和 <code>/tools/*</code> 会自动补全</p>
+				<input id="baseUrl" type="text" placeholder="https://api.deepseek.com" spellcheck="false" autocomplete="off" />
+			</div>
+
+			<div class="field">
+				<div class="field-head">
+					<label for="apiKey">DeepSeek API Key</label>
+					<span
+						id="balanceBadge"
+						class="balance"
+						title="账户余额；点击刷新，打开面板、保存密钥、测试成功后也会自动刷"
+						>—</span>
+				</div>
+				<p class="hint" id="keyHint">存在系统密钥库，不写进设置文件</p>
+				<div class="key-row">
+					<input id="apiKey" type="password" placeholder="sk-..." spellcheck="false" autocomplete="off" />
+					<button id="toggleKey" class="chip-btn" type="button">显示</button>
+				</div>
+			</div>
+		</section>
+
+		<section class="card">
+			<div class="card-head">
+				<h2>行为</h2>
+			</div>
+
+			<div class="field">
+				<label for="defaultCount">默认条数</label>
+				<div class="input-unit">
+					<input id="defaultCount" type="number" min="1" max="50" step="1" />
+					<span>条</span>
+				</div>
+			</div>
+		</section>
+
+		<section class="card">
+			<div class="card-head">
+				<h2>调试</h2>
+				<span id="testBadge" class="badge">未测试</span>
+			</div>
+
+			<div class="field">
+				<label for="testQuery">搜索一次</label>
+				<div class="test-row">
+					<input id="testQuery" type="text" placeholder="DeepSeek V4.1 Flash 1017 lang:zh" spellcheck="false" autocomplete="off" />
+					<button id="runSearch" class="chip-btn" type="button">搜一下</button>
+				</div>
+			</div>
+
+			<div class="field">
+				<label for="testUrl">抓取一次</label>
+				<div class="test-row">
+					<input id="testUrl" type="text" placeholder="https://api-docs.deepseek.com/zh-cn/guides/search" spellcheck="false" autocomplete="off" />
+					<button id="runFetch" class="chip-btn" type="button">抓一下</button>
+				</div>
+			</div>
+
+			<div id="output" class="output" hidden></div>
+		</section>
+
+		<footer>
+			<button id="openSettings" class="chip-btn" type="button">打开设置</button>
+			<span class="foot-note">只注册自己的工具，不改动 Copilot 任何内容</span>
+		</footer>
+	</div>
+
+	<div id="toasts" class="toasts" aria-live="polite"></div>
+	<script nonce="%NONCE%" src="%SCRIPT_URI%"></script>
+</body>
+</html>

@@ -1,0 +1,547 @@
+/*
+ * 面板样式
+ *
+ * 配色只用三类来源，深浅主题都不会翻车：
+ * 1) VS Code 主题前景/背景变量  2) 主题强调色（按钮/焦点）  3) 中性半透明灰
+ * 间距固定 4 / 8 / 12 / 16 四档，不临时造数。
+ */
+:root {
+	--gap-xs: 4px;
+	--gap-sm: 8px;
+	--gap-md: 12px;
+	--gap-lg: 16px;
+	--radius-sm: 4px;
+	--radius-md: 6px;
+	--line: var(--vscode-widget-border, rgba(128, 128, 128, 0.26));
+	--surface: rgba(128, 128, 128, 0.06);
+	--surface-strong: rgba(128, 128, 128, 0.11);
+	--ok: var(--vscode-testing-iconPassed, #3fb950);
+	--bad: var(--vscode-errorForeground, #f85149);
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	--accent: var(--vscode-button-background, #0078d4);
+	--accent-text: var(--vscode-button-foreground, #ffffff);
+	margin: 0;
+	padding: var(--gap-md) var(--gap-md) var(--gap-lg);
+	font-family: var(--vscode-font-family);
+	font-size: var(--vscode-font-size, 13px);
+	color: var(--vscode-foreground);
+	background: transparent;
+	line-height: 1.5;
+}
+
+.wrap {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-md);
+	max-width: 560px;
+}
+
+/* 顶部：logo + 名称 + 总开关 */
+.brand {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--gap-sm);
+}
+
+.brand-left {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+}
+
+.logo {
+	flex: none;
+	/* 图形自带留白，给大一点才撑得起标题行；再小人就糊成一团了 */
+	width: 38px;
+	height: 38px;
+	background: currentColor;
+	opacity: 0.92;
+	mask: url("icon.svg") no-repeat 50% 50%;
+	mask-size: contain;
+	-webkit-mask: url("icon.svg") no-repeat 50% 50%;
+	-webkit-mask-size: contain;
+}
+
+.brand-text {
+	min-width: 0;
+}
+
+.brand-text h1 {
+	margin: 0;
+	font-size: 15px;
+	font-weight: 600;
+	letter-spacing: 0.2px;
+}
+
+.brand-text p {
+	margin: 1px 0 0;
+	font-size: 11px;
+	color: var(--vscode-descriptionForeground);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* 开关：大号用于顶部，小号用于行内 */
+.switch {
+	position: relative;
+	display: inline-flex;
+	flex: none;
+	cursor: pointer;
+}
+
+.switch input {
+	position: absolute;
+	opacity: 0;
+	width: 0;
+	height: 0;
+}
+
+.switch .track {
+	width: 36px;
+	height: 20px;
+	border-radius: 10px;
+	background: var(--surface-strong);
+	border: 1px solid var(--line);
+	position: relative;
+	transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.switch .track::after {
+	content: "";
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
+	background: var(--vscode-foreground);
+	opacity: 0.7;
+	transition: transform 0.18s ease, background 0.18s ease, opacity 0.18s ease;
+}
+
+.switch input:checked + .track {
+	background: var(--accent);
+	border-color: var(--accent);
+}
+
+.switch input:checked + .track::after {
+	transform: translateX(16px);
+	background: var(--accent-text);
+	opacity: 1;
+}
+
+.switch input:focus-visible + .track {
+	outline: 1px solid var(--vscode-focusBorder);
+	outline-offset: 2px;
+}
+
+.switch.small .track {
+	width: 32px;
+	height: 18px;
+}
+
+.switch.small .track::after {
+	width: 12px;
+	height: 12px;
+}
+
+.switch.small input:checked + .track::after {
+	transform: translateX(14px);
+}
+
+/* 接入 / 分离状态条 */
+.status-bar {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 10px;
+	font-size: 11px;
+	color: var(--vscode-descriptionForeground);
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-left: 2px solid var(--ok);
+	border-radius: var(--radius-sm);
+}
+
+.status-bar.off {
+	border-left-color: var(--vscode-descriptionForeground);
+}
+
+.status-bar .dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--ok);
+	flex: none;
+}
+
+.status-bar.off .dot {
+	background: var(--vscode-descriptionForeground);
+}
+
+/* 卡片 */
+.card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-md);
+	padding: var(--gap-md);
+	border: 1px solid var(--line);
+	border-radius: var(--radius-md);
+	background: var(--surface);
+}
+
+.card-head {
+	display: flex;
+	align-items: center;
+	gap: var(--gap-sm);
+	padding-bottom: var(--gap-sm);
+	border-bottom: 1px solid var(--line);
+}
+
+.card-head h2 {
+	margin: 0;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.6px;
+	text-transform: uppercase;
+	color: var(--vscode-descriptionForeground);
+}
+
+.badge {
+	margin-left: auto;
+	padding: 1px 7px;
+	font-size: 10px;
+	line-height: 16px;
+	color: var(--vscode-descriptionForeground);
+	background: var(--surface-strong);
+	border-radius: 9px;
+	white-space: nowrap;
+}
+
+.badge.ok {
+	color: var(--ok);
+}
+
+.badge.bad {
+	color: var(--bad);
+}
+
+/* 字段：标签独占一行，说明另起一行，不再挤在一起换行 */
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-xs);
+	min-width: 0;
+}
+
+.field > label {
+	font-size: 12px;
+	font-weight: 500;
+}
+
+/* 字段标题行：左边标签，右边塞状态信息（目前就余额） */
+.field-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--gap-sm);
+}
+
+.field-head > label {
+	font-size: 12px;
+	font-weight: 500;
+}
+
+/* 余额徽章：数字等宽，滚动时不左右抖；点一下可以手动刷新 */
+.balance {
+	flex: none;
+	height: 18px;
+	padding: 0 7px;
+	font-size: 11px;
+	font-weight: 500;
+	line-height: 17px;
+	font-variant-numeric: tabular-nums;
+	font-feature-settings: "tnum";
+	color: var(--vscode-descriptionForeground);
+	background: var(--surface-strong);
+	border: 1px solid var(--line);
+	border-radius: 9px;
+	white-space: nowrap;
+	cursor: pointer;
+	transition: opacity 0.14s ease;
+}
+
+.balance:active {
+	opacity: 0.6;
+}
+
+/* 请求在飞行途中先暗一点，让“我点了”有回音 */
+.balance.refreshing {
+	opacity: 0.45;
+}
+
+.balance.low {
+	color: var(--bad);
+	border-color: var(--bad);
+}
+
+.hint {
+	margin: 0;
+	font-size: 11px;
+	line-height: 1.45;
+	color: var(--vscode-descriptionForeground);
+}
+
+.hint code {
+	padding: 0 3px;
+	font-family: var(--vscode-editor-font-family, monospace);
+	font-size: 10px;
+	background: var(--surface-strong);
+	border-radius: 3px;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="number"] {
+	width: 100%;
+	min-width: 0;
+	height: 28px;
+	padding: 0 8px;
+	font-family: inherit;
+	font-size: inherit;
+	color: var(--vscode-input-foreground);
+	background: var(--vscode-input-background);
+	border: 1px solid var(--vscode-input-border, var(--line));
+	border-radius: var(--radius-sm);
+	outline: none;
+	transition: border-color 0.14s ease;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus {
+	border-color: var(--vscode-focusBorder);
+}
+
+input::placeholder {
+	color: var(--vscode-input-placeholderForeground, var(--vscode-descriptionForeground));
+}
+
+/*
+ * 数字框自带的上下箭头是浏览器原生控件，深色主题下渲染成一个白方块，
+ * 跟哪套配色都对不上，直接隐掉；改数字手打就行。
+ */
+input[type="number"] {
+	appearance: textfield;
+	-moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+.key-row,
+.test-row {
+	display: flex;
+	align-items: center;
+	gap: var(--gap-sm);
+}
+
+.key-row input,
+.test-row input {
+	flex: 1;
+}
+
+.grid-2 {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--gap-md);
+}
+
+/* 三个数字框排一行，窄侧边栏下也不折行 */
+.grid-3 {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: var(--gap-sm);
+}
+
+/* 带单位的输入框：单位贴在右侧，不占标签行 */
+.input-unit {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.input-unit input {
+	padding-right: 34px;
+}
+
+.input-unit span {
+	position: absolute;
+	right: 8px;
+	font-size: 10px;
+	color: var(--vscode-descriptionForeground);
+	pointer-events: none;
+}
+
+/* 行内开关：左边两行文字，右边一个开关 */
+.switch-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--gap-md);
+	padding: var(--gap-sm) 0 0;
+	border-top: 1px solid var(--line);
+	cursor: pointer;
+}
+
+.switch-row-text {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	min-width: 0;
+}
+
+.switch-title {
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.switch-desc {
+	font-size: 11px;
+	color: var(--vscode-descriptionForeground);
+}
+
+.chip-btn {
+	flex: none;
+	height: 28px;
+	padding: 0 10px;
+	font-family: inherit;
+	font-size: 11px;
+	color: var(--vscode-foreground);
+	background: var(--surface-strong);
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	cursor: pointer;
+	transition: background 0.14s ease, border-color 0.14s ease;
+}
+
+.chip-btn:hover:not(:disabled) {
+	background: var(--surface);
+	border-color: var(--vscode-focusBorder);
+}
+
+button:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
+/* 调试输出 */
+.output {
+	margin: 0;
+	padding: var(--gap-sm) 10px;
+	max-height: 240px;
+	overflow: auto;
+	font-family: var(--vscode-editor-font-family, monospace);
+	font-size: 11px;
+	line-height: 1.6;
+	color: var(--vscode-foreground);
+	background: var(--vscode-textCodeBlock-background, var(--surface-strong));
+	border: 1px solid var(--line);
+	border-radius: var(--radius-sm);
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.output::-webkit-scrollbar {
+	width: 8px;
+}
+
+.output::-webkit-scrollbar-thumb {
+	background: var(--surface-strong);
+	border-radius: 4px;
+}
+
+/* 底部 */
+footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--gap-sm);
+	padding-top: var(--gap-xs);
+}
+
+.foot-note {
+	font-size: 10px;
+	line-height: 1.4;
+	color: var(--vscode-descriptionForeground);
+	text-align: right;
+}
+
+/* Toast：右下角滑入，成功/失败/提示三种 */
+.toasts {
+	position: fixed;
+	right: var(--gap-md);
+	bottom: var(--gap-md);
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: var(--gap-sm);
+	pointer-events: none;
+	z-index: 20;
+}
+
+.toast {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	max-width: 320px;
+	padding: 7px 11px;
+	font-size: 11px;
+	line-height: 1.45;
+	color: var(--vscode-foreground);
+	background: var(--vscode-notifications-background, var(--surface-strong));
+	border: 1px solid var(--line);
+	border-radius: var(--radius-md);
+	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.24);
+	opacity: 0;
+	transform: translateY(8px);
+	transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast.show {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.toast::before {
+	content: "";
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	flex: none;
+	background: var(--vscode-descriptionForeground);
+}
+
+.toast.success::before {
+	background: var(--ok);
+}
+
+.toast.error::before {
+	background: var(--bad);
+}
+
+.toast.error {
+	border-color: color-mix(in srgb, var(--bad) 45%, var(--line));
+}

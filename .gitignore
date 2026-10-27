@@ -1,0 +1,7 @@
+node_modules/
+out/
+*.vsix
+.vscode-test/
+
+# 预览页是脚本生成的，重跑就有，不进版本库
+测试脚本/输出/
