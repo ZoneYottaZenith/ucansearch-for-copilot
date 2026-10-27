@@ -35,7 +35,7 @@ Copilot 的聊天界面、Agent 模式、指令与 Skills、其他工具调用�
 **关于插件名字。** `UCanSearch` 读作 *U Can Search*，取「你也能搜」的意思：搜索和抓取都在你和 DeepSeek 之间直连，工具照旧挂在 Copilot 原生的工具列表里。`for Copilot` 则划清边界——它是给 Copilot 增配，不是另一个聊天客户端。
 
 <p align="center">
-  <img src="resources/screenshots/panel.png" alt="UCanSearch 侧边栏面板" width="760">
+  <img src="resources/screenshots/panel.png" alt="UCanSearch 侧边栏面板" width="900">
 </p>
 <p align="center"><sub>侧边栏面板：地址、Key、默认条数，加两个当场验一次的调试框</sub></p>
 
