@@ -2,7 +2,7 @@
 
 > **填一把 DeepSeek API Key，Copilot 就多出「搜索网页」和「抓取网页」两个工具——它终于能查新东西，而不是靠记忆编。**
 
-**不想自己编译？两种装法**：到 [Releases 页面](https://github.com/ZoneYottaZenith/ucansearch-for-copilot/releases) 下载对应版本的 `.vsix`，然后 `code --install-extension <文件名>.vsix`，或在扩展视图右上角「…」→「从 VSIX 安装」。也可以按下面的「安装与调试」从源码跑起来。
+**不想自己编译？两种装法**：在 VS Code 扩展市场搜索 **UCanSearch for Copilot** 直接安装（[市场页面](https://marketplace.visualstudio.com/items?itemName=ZoneYottaZenith.ucansearch)）；或者到 [Releases 页面](https://github.com/ZoneYottaZenith/ucansearch-for-copilot/releases) 下载对应版本的 `.vsix`，然后 `code --install-extension <文件名>.vsix`，或在扩展视图右上角「…」→「从 VSIX 安装」。也可以按下面的「安装与调试」从源码跑起来。
 
 给 GitHub Copilot 装上**网页搜索**和**网页抓取**——两个工具都直连 DeepSeek 官方的 Search / Fetch 接口，参数和返回字段跟官方文档一一对应，中间不经过任何第三方中转。
 
