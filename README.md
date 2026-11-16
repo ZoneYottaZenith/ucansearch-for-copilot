@@ -105,7 +105,7 @@ npm run compile
 ```bash
 npm run compile
 npx --yes @vscode/vsce package --no-dependencies
-code --install-extension ucansearch-0.3.9.vsix
+code --install-extension ucansearch-0.4.1.vsix
 ```
 
 ## 使用步骤

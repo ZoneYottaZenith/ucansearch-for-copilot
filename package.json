@@ -1,8 +1,8 @@
 {
 	"name": "ucansearch",
 	"displayName": "UCanSearch for Copilot",
-	"description": "把网页搜索、网页抓取和本地文档读取接进 GitHub Copilot：搜索走 DeepSeek Search 接口，抓取走 DeepSeek Fetch 接口，本地 PDF / Word / PPT 走 OCR 接口转成文字，结果直接喂给模型。",
-	"version": "0.3.9",
+	"description": "填一把 DeepSeek API Key，Copilot 就多出「搜索网页」「抓取网页」「读取本地文档」三个工具——它终于能查新东西、也能读你电脑里的 PDF，而不是靠记忆编。",
+	"version": "0.4.1",
 	"publisher": "ZoneYottaZenith",
 	"license": "MIT",
 	"icon": "media/icon.png",
