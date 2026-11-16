@@ -6,3 +6,7 @@ src/**
 **/*.map
 **/*.ts
 node_modules/**
+*.zip
+*.vsix
+本地打包指令*.txt
+待办-*.md
