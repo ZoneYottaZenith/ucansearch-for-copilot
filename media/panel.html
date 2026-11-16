@@ -14,10 +14,10 @@
 				<span class="logo" aria-hidden="true"></span>
 				<div class="brand-text">
 					<h1>UCanSearch</h1>
-					<p>给 Copilot 装上网页搜索和抓取</p>
+					<p><span id="subtitleText">给 Copilot 装上搜索、抓取和读文档</span><span id="version" class="version"></span></p>
 				</div>
 			</div>
-			<label class="switch" title="关闭后两个工具会被注销，Copilot 回到原样">
+			<label class="switch" title="关闭后三个工具会被注销，Copilot 回到原样">
 				<input type="checkbox" id="enabled" />
 				<span class="track"></span>
 			</label>
@@ -92,6 +92,16 @@
 					<input id="testUrl" type="text" placeholder="https://api-docs.deepseek.com/zh-cn/guides/search" spellcheck="false" autocomplete="off" />
 					<button id="runFetch" class="chip-btn" type="button">抓一下</button>
 				</div>
+			</div>
+
+			<div class="field">
+				<label for="testDocument">读取文件</label>
+				<div class="test-row">
+					<input id="testDocument" type="text" placeholder="选一个 PDF / Word / PPT" spellcheck="false" autocomplete="off" />
+					<button id="pickDocument" class="chip-btn" type="button" title="从磁盘挑一个文件，省得手打路径">选择</button>
+					<button id="runDocument" class="chip-btn" type="button" title="上传给 DeepSeek 识别文字">读取</button>
+				</div>
+				<p class="hint">按页计费，文件内容会上传给 DeepSeek</p>
 			</div>
 
 			<div id="output" class="output" hidden></div>

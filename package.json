@@ -1,8 +1,8 @@
 {
 	"name": "ucansearch",
 	"displayName": "UCanSearch for Copilot",
-	"description": "把网页搜索和网页抓取接进 GitHub Copilot：搜索走 DeepSeek Search 接口，抓取走 DeepSeek Fetch 接口，结果直接喂给模型。",
-	"version": "0.3.6",
+	"description": "把网页搜索、网页抓取和本地文档读取接进 GitHub Copilot：搜索走 DeepSeek Search 接口，抓取走 DeepSeek Fetch 接口，本地 PDF / Word / PPT 走 OCR 接口转成文字，结果直接喂给模型。",
+	"version": "0.3.9",
 	"publisher": "ZoneYottaZenith",
 	"license": "MIT",
 	"icon": "media/icon.png",
@@ -37,7 +37,8 @@
 	"activationEvents": [
 		"onStartupFinished",
 		"onLanguageModelTool:ucansearch_query_web",
-		"onLanguageModelTool:ucansearch_fetch_web"
+		"onLanguageModelTool:ucansearch_fetch_web",
+		"onLanguageModelTool:ucansearch_read_document"
 	],
 	"contributes": {
 		"languageModelTools": [
@@ -112,16 +113,46 @@
 						"url"
 					]
 				}
+			},
+			{
+				"name": "ucansearch_read_document",
+				"displayName": "UCanSearch 读取文件",
+				"userDescription": "把本地 PDF / Word / PPT 交给 DeepSeek 识别文字，返回分页正文。",
+				"modelDescription": "读取本地 PDF、Word（doc/docx）或 PowerPoint（ppt/pptx）里的文字。当用户要你看某份本地文档、合同、论文、简历、PPT 的内容时川用它，传给它文件路径就行——你看不到二进制，也用不着猜内容。path 可以是绝对路径（如 D:\\a\\b.pdf），也可以是相对工作区第一个文件夹的路径。返回按页划分的文字；若提示已省略，说明文件太长，后半部分未返回。每次调用都会按页计费，不要对同一个文件反复读。图片（png/jpg 等）和纯文本文件不需要它。",
+				"toolReferenceName": "readDocument",
+				"canBeReferencedInPrompt": true,
+				"icon": {
+					"light": "media/tool-icon-light.svg",
+					"dark": "media/icon.svg"
+				},
+				"when": "config.ucansearch.enabled",
+				"tags": [
+					"document",
+					"file"
+				],
+				"inputSchema": {
+					"type": "object",
+					"properties": {
+						"path": {
+							"type": "string",
+							"description": "本地文件路径：绝对路径，或相对工作区第一个文件夹的路径。只支持 pdf、doc、docx、ppt、pptx，文件不超 100 MiB。"
+						}
+					},
+					"required": [
+						"path"
+					]
+				}
 			}
 		],
 		"languageModelToolSets": [
 			{
 				"name": "UCanSearch",
-				"description": "给 Copilot 装上网页搜索和抓取",
+				"description": "给 Copilot 装上搜索、抓取和读文档",
 				"icon": "$(search)",
 				"tools": [
 					"searchWeb",
-					"fetchWeb"
+					"fetchWeb",
+					"readDocument"
 				]
 			}
 		],

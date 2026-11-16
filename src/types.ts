@@ -69,3 +69,36 @@ export interface SearchToolInput {
 export interface FetchToolInput {
 	url: string;
 }
+
+/** OCR 结果里的一页。 */
+export interface OcrPage {
+	/** 页码，从 0 开始。 */
+	index?: number;
+	/** 该页的模型原始输出，上游不做任何清理。 */
+	text?: string;
+	/** stop；输出达到上限时是 length，该页文本不完整。 */
+	finish_reason?: string;
+}
+
+export interface OcrResponse {
+	id?: string;
+	page_count?: number;
+	pages?: OcrPage[];
+	usage?: {
+		input_tokens?: number;
+		output_tokens?: number;
+		total_tokens?: number;
+	};
+	/** 识别开始后失败或超时时，响应体换成这个错误对象。 */
+	error?: {
+		message?: string;
+		type?: string;
+		code?: string;
+	};
+}
+
+/** 读取文件工具入参。 */
+export interface DocumentToolInput {
+	/** 本地文件路径：绝对路径，或相对工作区第一个文件夹的路径。 */
+	path: string;
+}

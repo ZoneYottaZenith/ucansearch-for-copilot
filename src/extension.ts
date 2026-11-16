@@ -9,6 +9,7 @@ import {
 import { ApiError } from "./http";
 import { PanelViewProvider } from "./panel";
 import { callSearch, formatSearchResults, validateQuery } from "./searchService";
+import { registerDocumentTool } from "./tools/documentTool";
 import { registerFetchTool } from "./tools/fetchTool";
 import { registerSearchTool } from "./tools/searchTool";
 
@@ -29,7 +30,8 @@ export function activate(context: vscode.ExtensionContext): void {
 		if (enabled && !tools) {
 			tools = vscode.Disposable.from(
 				registerSearchTool(context.secrets),
-				registerFetchTool(context.secrets)
+				registerFetchTool(context.secrets),
+				registerDocumentTool(context.secrets)
 			);
 		} else if (!enabled && tools) {
 			tools.dispose();

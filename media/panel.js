@@ -3,6 +3,7 @@ const $ = (id) => document.getElementById(id);
 
 const ui = {
 	enabled: $("enabled"),
+	version: $("version"),
 	statusBar: $("statusBar"),
 	statusText: $("statusText"),
 	connBadge: $("connBadge"),
@@ -17,6 +18,9 @@ const ui = {
 	runSearch: $("runSearch"),
 	testUrl: $("testUrl"),
 	runFetch: $("runFetch"),
+	testDocument: $("testDocument"),
+	pickDocument: $("pickDocument"),
+	runDocument: $("runDocument"),
 	output: $("output"),
 	openSettings: $("openSettings"),
 	toasts: $("toasts"),
@@ -26,6 +30,8 @@ const send = (message) => vscode.postMessage(message);
 
 /** 用户动过密钥框才把新值回传，否则会把已存的密钥冲成空 */
 let keyDirty = false;
+/** 当前框里是不是已从后端取回的完整密钥（而不是掩码） */
+let keyRevealed = false;
 let hasSavedKey = false;
 /** 后端给的密钥掩码（首尾明文、中间打点），只用于回显 */
 let keyMask = "";
@@ -138,7 +144,7 @@ function applyEnabled(enabled) {
 	ui.enabled.checked = enabled;
 	ui.statusBar.classList.toggle("off", !enabled);
 	ui.statusText.textContent = enabled
-		? "已接入 · Copilot 能看到 UCanSearch 的两个工具"
+		? "已接入 · Copilot 能看到 UCanSearch 的三个工具"
 		: "已分离 · 工具已注销，Copilot 保持原样";
 }
 
@@ -149,12 +155,13 @@ function applyState(state) {
 
 	latestState = state;
 	applyEnabled(state.enabled !== false);
+	ui.version.textContent = state.version ? `v${state.version}` : "";
 	ui.baseUrl.value = state.baseUrl || "";
 	ui.defaultCount.value = state.defaultCount ?? 5;
 
 	hasSavedKey = state.hasApiKey === true;
 	keyMask = typeof state.keyMask === "string" ? state.keyMask : "";
-	if (!keyDirty) {
+	if (!keyDirty && !keyRevealed) {
 		showKeyMask();
 	}
 	ui.keyHint.textContent = hasSavedKey
@@ -169,6 +176,7 @@ function applyState(state) {
  * 掩码是只读的，用户点进去就清空，方便直接敲新密钥。
  */
 function showKeyMask() {
+	keyRevealed = false;
 	ui.apiKey.value = keyMask;
 	ui.apiKey.readOnly = Boolean(keyMask);
 	// 掩码本身就是给人看的，不能拿密码框遮住（否则变成一串小圆点）
@@ -188,20 +196,31 @@ ui.enabled.addEventListener("change", () => {
 });
 
 ui.toggleKey.addEventListener("click", () => {
-	// 掩码状态下没什么可藏的
-	if (ui.apiKey.readOnly) {
+	// 已经是明文：收回掩码
+	if (keyRevealed) {
+		showKeyMask();
 		return;
 	}
-	const visible = ui.apiKey.type === "text";
-	ui.apiKey.type = visible ? "password" : "text";
-	ui.toggleKey.textContent = visible ? "显示" : "隐藏";
+	// 框里是用户自己敲的，或还没存过密钥：就地切换密码框/文本框
+	if (keyDirty || !hasSavedKey) {
+		const visible = ui.apiKey.type === "text";
+		ui.apiKey.type = visible ? "password" : "text";
+		ui.toggleKey.textContent = visible ? "显示" : "隐藏";
+		return;
+	}
+	// 有已保存的密钥：向扩展要一次完整明文
+	send({ type: "revealKey" });
 });
 
 ui.apiKey.addEventListener("focus", () => {
 	if (!ui.apiKey.readOnly) {
 		return;
 	}
-	// 一点进来就把掩码让开，直接敲新密钥就行
+	// 正在看明文：保留内容，方便选中复制
+	if (keyRevealed) {
+		return;
+	}
+	// 掩码态一点进来就让开，直接敲新密钥就行
 	ui.apiKey.readOnly = false;
 	ui.apiKey.value = "";
 	ui.apiKey.type = "password";
@@ -234,6 +253,10 @@ function commitCount() {
 }
 
 function commitApiKey() {
+	// 正在看明文：失焦不该把掩码盖回去，要收就点「隐藏」
+	if (keyRevealed) {
+		return;
+	}
 	if (!keyDirty) {
 		// 只是点进来又走：把掩码填回去，什么都不发
 		showKeyMask();
@@ -307,6 +330,30 @@ ui.testQuery.addEventListener("keydown", (event) => {
 	}
 });
 
+ui.pickDocument.addEventListener("click", () => {
+	send({ type: "pickDocument" });
+});
+
+ui.runDocument.addEventListener("click", () => {
+	const path = ui.testDocument.value.trim();
+	if (!path) {
+		toast("先选一个文件，或把路径填上", "error");
+		return;
+	}
+	ui.runDocument.disabled = true;
+	setBadge(ui.testBadge, "读取中…");
+	showOutput("正在上传文件并请求 /tools/ocr …");
+	// 按页计费，先看一眼余额
+	requestBalanceRefresh();
+	send({ type: "testDocument", path, apiKey: currentApiKey() });
+});
+
+ui.testDocument.addEventListener("keydown", (event) => {
+	if (event.key === "Enter") {
+		ui.runDocument.click();
+	}
+});
+
 ui.testUrl.addEventListener("keydown", (event) => {
 	if (event.key === "Enter") {
 		ui.runFetch.click();
@@ -333,12 +380,27 @@ window.addEventListener("message", (event) => {
 
 	if (message.type === "enabledChanged") {
 		applyEnabled(message.enabled === true);
-		toast(message.enabled ? "已接入，Copilot 现在能看到两个工具" : "已分离，工具已注销", "success");
+		toast(message.enabled ? "已接入，Copilot 现在能看到三个工具" : "已分离，工具已注销", "success");
 		return;
 	}
 
 	if (message.type === "balance") {
 		applyBalance(message);
+		return;
+	}
+
+	if (message.type === "revealedKey") {
+		// 后端给的完整密钥：只填进框里给人看，不回存、不落下任何痕迹
+		if (!message.value) {
+			toast("没有可以显示的密钥", "error");
+			showKeyMask();
+			return;
+		}
+		keyRevealed = true;
+		ui.apiKey.readOnly = true;
+		ui.apiKey.type = "text";
+		ui.apiKey.value = message.value;
+		ui.toggleKey.textContent = "隐藏";
 		return;
 	}
 
@@ -359,14 +421,23 @@ window.addEventListener("message", (event) => {
 		return;
 	}
 
+	if (message.type === "pickedDocument") {
+		if (message.path) {
+			ui.testDocument.value = message.path;
+		}
+		return;
+	}
+
 	if (message.type === "test") {
-		const isSearch = message.kind === "search";
 		ui.runSearch.disabled = false;
 		ui.runFetch.disabled = false;
+		ui.runDocument.disabled = false;
 		setBadge(ui.testBadge, message.ok ? "成功" : "失败", message.ok ? "ok" : "bad");
 		showOutput(message.text || "");
+		const label =
+			message.kind === "search" ? "搜索" : message.kind === "document" ? "读取" : "抓取";
 		toast(
-			message.ok ? (isSearch ? "搜索成功" : "抓取成功") : message.text || "请求失败",
+			message.ok ? `${label}成功` : message.text || "请求失败",
 			message.ok ? "success" : "error"
 		);
 	}

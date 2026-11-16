@@ -11,6 +11,12 @@ import {
 	setEnabled,
 } from "./config";
 import { ApiError } from "./http";
+import {
+	MAX_BYTES,
+	callOcr,
+	formatOcrResult,
+	validateDocumentName,
+} from "./documentService";
 import { maskSecret } from "./mask";
 import { callFetch, callSearch, formatFetchResult, formatSearchResults } from "./searchService";
 
@@ -25,6 +31,8 @@ interface PanelState {
 	/** 首尾明文、中间打点的密钥，用于回显；没密钥时为空串。 */
 	keyMask: string;
 	defaultCount: number;
+	/** 扩展自身版本，面板在副标题旁边显示，便于一眼确认装的是哪一版。 */
+	version: string;
 }
 
 type InboundMessage =
@@ -38,14 +46,19 @@ type InboundMessage =
 	  }
 	| { type: "testSearch"; query: string; apiKey?: string }
 	| { type: "testFetch"; url: string; apiKey?: string }
+	| { type: "pickDocument" }
+	| { type: "testDocument"; path: string; apiKey?: string }
 	| { type: "refreshBalance" }
-	| { type: "openSettings" };
+	| { type: "openSettings" }
+	/** 用户点「显示」才把完整密钥取出来，默认不下发。 */
+	| { type: "revealKey" };
 
 /**
  * 侧边栏面板。
  *
  * 只做三件事：看当前配置、改配置、当场试一次接口。
- * 密钥永远只往扩展里传，不回传给 webview。
+ * 密钥只往扩展里传；回传给 webview 的默认只有掩码，
+ * 用户主动点「显示」时才单独取一次明文。
  */
 export class PanelViewProvider implements vscode.WebviewViewProvider {
 	public static readonly viewType = "ucansearch.panel";
@@ -145,6 +158,22 @@ export class PanelViewProvider implements vscode.WebviewViewProvider {
 				await this.testFetch(message.url, message.apiKey);
 				return;
 
+			case "pickDocument": {
+				const picked = await vscode.window.showOpenDialog({
+					canSelectFiles: true,
+					canSelectFolders: false,
+					canSelectMany: false,
+					openLabel: "选择文件",
+					filters: { 文档: ["pdf", "doc", "docx", "ppt", "pptx"] },
+				});
+				await this.post({ type: "pickedDocument", path: picked?.[0]?.fsPath ?? "" });
+				return;
+			}
+
+			case "testDocument":
+				await this.testDocument(message.path, message.apiKey);
+				return;
+
 			case "refreshBalance":
 				await this.refreshBalance();
 				return;
@@ -152,6 +181,13 @@ export class PanelViewProvider implements vscode.WebviewViewProvider {
 			case "openSettings":
 				await vscode.commands.executeCommand("workbench.action.openSettings", "ucansearch");
 				return;
+
+			case "revealKey": {
+				// 只在用户主动点「显示」时回一次明文，不写设置、不记日志
+				const revealed = await getApiKey(this.secrets);
+				await this.post({ type: "revealedKey", value: revealed ?? "" });
+				return;
+			}
 
 			default:
 				return;
@@ -240,6 +276,65 @@ export class PanelViewProvider implements vscode.WebviewViewProvider {
 		}
 	}
 
+	private async testDocument(rawPath: string, apiKeyInput?: string): Promise<void> {
+		const target = (rawPath ?? "").trim();
+		if (!target) {
+			await this.post({ type: "test", kind: "document", ok: false, text: "先选一个文件。" });
+			return;
+		}
+
+		const name = target.split(/[\\/]/).pop() || target;
+		const invalid = validateDocumentName(name);
+		if (invalid) {
+			await this.post({ type: "test", kind: "document", ok: false, text: `「${name}」${invalid}` });
+			return;
+		}
+
+		const uri = vscode.Uri.file(target);
+		let bytes: Uint8Array;
+		try {
+			const stat = await vscode.workspace.fs.stat(uri);
+			if (stat.size > MAX_BYTES) {
+				await this.post({
+					type: "test",
+					kind: "document",
+					ok: false,
+					text: `文件有 ${(stat.size / 1024 / 1024).toFixed(1)} MB，超过官方 100 MiB 上限。`,
+				});
+				return;
+			}
+			bytes = await vscode.workspace.fs.readFile(uri);
+		} catch {
+			await this.post({
+				type: "test",
+				kind: "document",
+				ok: false,
+				text: "读不到这个文件，确认路径没写错、也没被删掉。",
+			});
+			return;
+		}
+
+		const apiKey = (apiKeyInput ?? "").trim() || (await getApiKey(this.secrets));
+		if (!apiKey) {
+			await this.post({ type: "test", kind: "document", ok: false, text: "还没填 API Key。" });
+			return;
+		}
+
+		try {
+			const response = await callOcr({ baseUrl: getBaseUrl(), apiKey, fileName: name, bytes });
+			await this.post({
+				type: "test",
+				kind: "document",
+				ok: true,
+				text: formatOcrResult(name, response),
+			});
+			// 这次识别按页计费，余额顺手刷一下
+			void this.refreshBalance();
+		} catch (error) {
+			await this.post({ type: "test", kind: "document", ok: false, text: describe(error) });
+		}
+	}
+
 	private async postState(): Promise<void> {
 		const apiKey = await getApiKey(this.secrets);
 		const state: PanelState = {
@@ -248,6 +343,7 @@ export class PanelViewProvider implements vscode.WebviewViewProvider {
 			hasApiKey: Boolean(apiKey),
 			keyMask: maskSecret(apiKey),
 			defaultCount: getDefaultCount(),
+			version: this.context.extension.packageJSON.version ?? "",
 		};
 		await this.post({ type: "state", state });
 	}

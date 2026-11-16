@@ -25,6 +25,10 @@ const {
 	formatSearchResults,
 	formatFetchResult,
 } = require(path.join(outDir, "searchService.js"));
+const {
+	validateDocumentName,
+	formatOcrResult,
+} = require(path.join(outDir, "documentService.js"));
 
 const failures = [];
 let passed = 0;
@@ -219,6 +223,62 @@ test("密钥校验：只收可见 ASCII", () => {
 	ok(!isPlausibleSecret("sk abc"), "中间空格必须拒绝");
 	ok(!isPlausibleSecret("   "), "全空白必须拒绝");
 	ok(!isPlausibleSecret(""), "空串必须拒绝");
+});
+
+// ---- 读取文件（OCR）----
+
+test("文件类型：只放行 pdf / word / ppt", () => {
+	for (const name of ["a.pdf", "a.PDF", "a.doc", "a.docx", "a.ppt", "a.pptx", "报告.Docx"]) {
+		equal(validateDocumentName(name), null, `${name} 应放行`);
+	}
+	for (const name of ["a.png", "a.jpg", "a.txt", "a.md", "a.xlsx", "a", "a.pdf.exe"]) {
+		ok(validateDocumentName(name), `${name} 应拒绝`);
+	}
+});
+
+test("识别结果：按页返回，带页码", () => {
+	const text = formatOcrResult("简历.pdf", {
+		page_count: 2,
+		pages: [
+			{ index: 0, text: "第一页内容", finish_reason: "stop" },
+			{ index: 1, text: "第二页内容", finish_reason: "stop" },
+		],
+	});
+	includes(text, "简历.pdf", "文件名");
+	includes(text, "共 2 页", "页数");
+	includes(text, "第 1 页", "第一页标题");
+	includes(text, "第一页内容", "第一页正文");
+	includes(text, "第 2 页", "第二页标题");
+	includes(text, "第二页内容", "第二页正文");
+	ok(!text.includes("已省略"), "没超长不该说省略");
+});
+
+test("识别结果：空页与截断页要明说", () => {
+	const text = formatOcrResult("a.pdf", {
+		page_count: 2,
+		pages: [
+			{ index: 0, text: "   ", finish_reason: "stop" },
+			{ index: 1, text: "半截", finish_reason: "length" },
+		],
+	});
+	includes(text, "(空)", "空页要有标记");
+	includes(text, "输出达到上限", "截断页要提示");
+});
+
+test("识别结果：一页都没有时说人话", () => {
+	const text = formatOcrResult("a.pdf", { page_count: 0, pages: [] });
+	includes(text, "没有识别出文字", "空结果提示");
+});
+
+test("识别结果：超长要截断并说清剩多少", () => {
+	const pages = [];
+	for (let i = 0; i < 5; i++) {
+		pages.push({ index: i, text: "填".repeat(40000), finish_reason: "stop" });
+	}
+	const text = formatOcrResult("长文档.pdf", { page_count: 5, pages });
+	ok(text.length <= 130000, `截断后不该超预算，实际 ${text.length}`);
+	includes(text, "已省略", "必须告诉模型后面没给");
+	includes(text, "第 3 页之后", "说清从哪页开始省略");
 });
 
 // ---- 汇总 ----
